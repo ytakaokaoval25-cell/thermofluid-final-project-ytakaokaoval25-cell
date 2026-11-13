@@ -8,6 +8,9 @@
 # 配列から独立に計算する（公式例の Nu 計算との照合にもなる）．
 #
 # 出力：output/<名前>_checks.toml，output/<名前>_timeseries.csv
+#
+# 変更履歴：平均窓 [20, 40] に保存時刻が 2 点未満のとき（smoke 計算など）は
+#           収支 [budget] と時間平均 [means] を省略するようにした（以前は BoundsError で停止）．
 
 using Oceananigans
 using Printf
@@ -157,8 +160,14 @@ window(t0, t1) = findall(τ -> t0 <= τ <= t1, t)
 mean_over(x, idx) = sum(x[idx]) / length(idx)
 w_all, w_a, w_b = window(20, 40), window(20, 30), window(30, 40)
 
-n0, n1 = first(w_all), last(w_all)
-R, Rrel = budget_residual(n0, n1)
+# 窓 [20, 40] に保存時刻が 2 点未満（smoke など短い計算）のときは収支・平均を省略する
+has_window = length(w_all) >= 2
+if has_window
+    n0, n1 = first(w_all), last(w_all)
+    R, Rrel = budget_residual(n0, n1)
+else
+    @warn "平均窓 [20, 40] に十分なデータがないため，収支と時間平均を省略します" final_time = t[end]
+end
 
 open(joinpath(outdir, name * "_checks.toml"), "w") do io
     println(io, "# 手順1の検証結果（scripts/check_horizontal_convection.jl が生成）")
@@ -168,18 +177,24 @@ open(joinpath(outdir, name * "_checks.toml"), "w") do io
     println(io, "\n[divergence]")
     println(io, "max_abs = ", maximum(divmax))
     println(io, "max_abs_normalized = ", maximum(divmax) / (U★ / Lx), "  # U★/Lx で規格化")
-    println(io, "\n[budget]  # 窓 t = ", t[n0], "〜", t[n1])
-    println(io, "delta_Eb = ", Eb[n1] - Eb[n0])
-    println(io, "integral_B_minus_D = ", (Eb[n1] - Eb[n0]) - R)
-    println(io, "residual = ", R)
-    println(io, "residual_relative_to_integral_D = ", Rrel)
+    if has_window
+        println(io, "\n[budget]  # 窓 t = ", t[n0], "〜", t[n1])
+        println(io, "delta_Eb = ", Eb[n1] - Eb[n0])
+        println(io, "integral_B_minus_D = ", (Eb[n1] - Eb[n0]) - R)
+        println(io, "residual = ", R)
+        println(io, "residual_relative_to_integral_D = ", Rrel)
+    else
+        println(io, "\n# [budget] と [means] は省略：平均窓 [20, 40] にデータがない（final_time < 20）")
+    end
     println(io, "\n[diffusive_solution]  # 解析解を同じ離散勾配で評価した Nu（1 に近づくべき）")
     for (a, c, v) in diffusive_table
         @printf(io, "Nu_%dx%d = %.6f\n", a, c, v)
     end
-    println(io, "\n[means]  # 窓 [20, 40], 前半 [20, 30], 後半 [30, 40]")
-    for (lab, x) in (("Nu", Nu), ("K", K), ("Psi", Ψ), ("delta_chi", δ))
-        @printf(io, "%s = [%.5g, %.5g, %.5g]\n", lab, mean_over(x, w_all), mean_over(x, w_a), mean_over(x, w_b))
+    if has_window
+        println(io, "\n[means]  # 窓 [20, 40], 前半 [20, 30], 後半 [30, 40]")
+        for (lab, x) in (("Nu", Nu), ("K", K), ("Psi", Ψ), ("delta_chi", δ))
+            @printf(io, "%s = [%.5g, %.5g, %.5g]\n", lab, mean_over(x, w_all), mean_over(x, w_a), mean_over(x, w_b))
+        end
     end
 end
 
