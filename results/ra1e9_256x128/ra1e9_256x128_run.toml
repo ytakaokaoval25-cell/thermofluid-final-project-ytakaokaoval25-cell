@@ -1,0 +1,13 @@
+date = "2026-11-13T13:27:41.195"
+julia = "1.10.13"
+oceananigans = "0.110.15"
+threads = 1
+Nx = 256
+Nz = 128
+Ra = 1.0e9
+Pr = 1
+stop_time = 100.0
+diffusive_cfl = "Inf"  # 時間刻みの拡散 CFL 上限（公式例は Inf）
+iterations = 10749
+wall_time_seconds = 505.480642833  # run! 全体（初回はコンパイル時間を含む）
+output = "output/ra1e9_256x128.jld2"

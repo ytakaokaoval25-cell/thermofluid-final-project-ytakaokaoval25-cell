@@ -3,13 +3,20 @@
 # 出典：Oceananigans.jl v0.110.15 examples/horizontal_convection.jl（MIT License）の
 #       "Load saved output, process, visualize" 以降．
 # 変更点：入力・出力のパスを変えた．最終時刻の場の図と Nu・K の時系列図を png で保存するようにした．
+#   （issue #5）Nu の分母を解析値ではなく，純拡散解に同じ演算子を適用した数値 χ_diff に変えた
+#               （scripts/nusselt_reference.jl）．流れなしで Nu = 1 が離散的にも成り立つ．
+#               解析値との比は <名前>_nu_reference.toml に書き出す．
+#   （issue #5）運動エネルギーを軸ラベルどおり K/(Lx b★) で出す（公式例のコードは Lx·H でしか割っていない）．
 #
 # 使い方：julia --project=. scripts/plot_horizontal_convection.jl
+#   HC_NAME=ra1e6 HC_RA=1e6 HC_FIGURES=results/ra1e6 julia --project=. scripts/plot_horizontal_convection.jl
 
 using CairoMakie
 using Oceananigans
 using Oceananigans.Fields
 using Printf
+
+include(joinpath(@__DIR__, "nusselt_reference.jl"))
 
 name = get(ENV, "HC_NAME", "horizontal_convection")
 outdir = get(ENV, "HC_OUTPUT", "output")
@@ -83,16 +90,29 @@ record(fig, joinpath(outdir, name * ".mp4"), frames, framerate=8) do i
     n[] = i
 end
 
-# ### Nusselt 数と運動エネルギー（公式例と同じ計算）
+# ### Nusselt 数と運動エネルギー
+#
+# 分子は公式例と同じ演算子．分母は純拡散解に同じ演算子を適用した数値（issue #5）．
 
-χ_diff = κ * b★^2 * π * tanh(2π * H / Lx) / (Lx * H)
+grid = b_timeseries.grid
+b_diff = diffusive_buoyancy(grid; b★, Lx, H)
+χ_diff = mean_dissipation(b_diff, κ; Lx, H)
+χ_diff_analytic = analytic_chi_diff(κ; b★, Lx, H)
+
+open(joinpath(figdir, name * "_nu_reference.toml"), "w") do io
+    println(io, "# Nu の分母（純拡散解に公式例と同じ演算子を適用した数値）と解析値の比較")
+    println(io, "Nx = ", size(grid, 1), "\nNz = ", size(grid, 3), "\nRa = ", Ra)
+    println(io, "chi_diff_numeric = ", χ_diff)
+    println(io, "chi_diff_analytic = ", χ_diff_analytic)
+    println(io, "ratio_numeric_to_analytic = ", χ_diff / χ_diff_analytic)
+end
 
 t = b_timeseries.times
 kinetic_energy, Nu = zeros(length(t)), zeros(length(t))
 
 for n = 1:length(t)
     ke = ∫dV(1/2 * s_timeseries[n]^2 / (Lx * H))
-    kinetic_energy[n] = ke[1, 1, 1]
+    kinetic_energy[n] = ke[1, 1, 1] / (Lx * b★)   # K/(Lx b★)（軸ラベルどおり）
     χ = ∫dV(χ_timeseries[n] / (Lx * H))
     Nu[n] = χ[1, 1, 1] / χ_diff
 end
@@ -105,7 +125,8 @@ lines!(ax_Nu, t, Nu; linewidth = 3)
 save(joinpath(figdir, name * "_Nu_KE.png"), fig2)
 
 open(joinpath(figdir, name * "_official_Nu.csv"), "w") do io
-    println(io, "t,KE,Nu  # 公式例と同じ方法（Oceananigans の演算子）で計算")
+    println(io, "# KE = K/(Lx b★)，Nu = ⟨χ⟩/χ_diff（χ_diff は純拡散解に同じ演算子を適用した数値）．Oceananigans の演算子で計算")
+    println(io, "t,KE,Nu")
     for n in 1:length(t)
         @printf(io, "%.3f,%.6g,%.6g\n", t[n], kinetic_energy[n], Nu[n])
     end
