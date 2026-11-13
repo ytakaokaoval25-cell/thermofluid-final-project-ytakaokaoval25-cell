@@ -1,0 +1,7 @@
+# Nu の分母（純拡散解に公式例と同じ演算子を適用した数値）と解析値の比較
+Nx = 128
+Nz = 64
+Ra = 1.0e6
+chi_diff_numeric = 0.004421866375726974
+chi_diff_analytic = 0.004426320209204781
+ratio_numeric_to_analytic = 0.9989937841666887
