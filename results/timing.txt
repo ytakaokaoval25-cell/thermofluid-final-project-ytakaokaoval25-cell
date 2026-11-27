@@ -1,0 +1,12 @@
+# 手順1の実行時間（2026-11-13，Apple M2 / 8 GB，macOS 15.6.1，JULIA_NUM_THREADS=1）
+# Julia 1.10.13，Oceananigans 0.110.15，CairoMakie 0.15.17
+# 「実時間」はシェルの time で測ったプロセス全体（パッケージ読込・JIT コンパイルを含む）
+# wall_time_seconds（*_run.toml）は run! の中だけ（初回コンパイルを含む）
+
+Pkg.add（インストール＋プリコンパイル，初回のみ）  : 15 分 55 秒
+smoke run（64×32, t = 2, 150 iter 程度）            : 実時間 1 分 23 秒（run! 49.2 秒，うち大半がコンパイル）
+smoke check                                         : 実時間 17 秒（初回は BoundsError で 23 秒，修正後に再実行）
+本計算 run（128×64, t = 40, 2184 iter）             : 実時間 1 分 51 秒（run! 74.6 秒）
+  ※ 進捗ログ：iter 50 の時点で wall 約 45 秒（ほぼコンパイル），以降 iter 2150 まで約 25 秒
+本計算 check                                        : 実時間 33 秒
+plot（図 2 枚＋mp4）                                : 実時間 2 分 25 秒

@@ -1,0 +1,30 @@
+# 手順1の検証結果（scripts/check_horizontal_convection.jl が生成）
+file = "output/horizontal_convection.jld2"
+Nx = 128
+Nz = 64
+Ra = 1.0e8
+Pr = 1.0
+final_time = 40.0
+
+[divergence]
+max_abs = 3.7848949432373047e-6
+max_abs_normalized = 5.352649760883542e-6  # U★/Lx で規格化
+
+[budget]  # 窓 t = 20.0〜40.0
+delta_Eb = 0.012557004669937562
+integral_B_minus_D = 0.016015704759227378
+residual = -0.0034587000892898154
+residual_relative_to_integral_D = -0.02119506941307219
+
+[diffusive_solution]  # 解析解を同じ離散勾配で評価した Nu（1 に近づくべき）
+Nu_32x16 = 0.993747
+Nu_64x32 = 0.998405
+Nu_128x64 = 0.999597
+Nu_256x128 = 0.999899
+Nu_512x256 = 0.999975
+
+[means]  # 窓 [20, 40], 前半 [20, 30], 後半 [30, 40]
+Nu = [9.2165, 9.1405, 9.3247]
+K = [0.0064944, 0.0065784, 0.0064916]
+Psi = [0.014141, 0.014759, 0.013684]
+delta_chi = [0.063996, 0.064817, 0.063148]

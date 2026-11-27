@@ -1,0 +1,6 @@
+Apple M2
+8
+8589934592
+ProductName:		macOS
+ProductVersion:		15.6.1
+BuildVersion:		24G90
