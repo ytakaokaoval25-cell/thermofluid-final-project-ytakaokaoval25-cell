@@ -9,6 +9,9 @@
 #   2. シミュレーション部分と作図部分を分けた（作図は scripts/plot_horizontal_convection.jl）
 #   3. 実行条件と実行時間を output/<名前>_run.toml に記録するようにした
 #   4. 検証（離散発散）のため，保存する量に速度 u, w を追加した
+#   5. （issue #5）時間刻みの拡散 CFL 上限を環境変数 HC_DIFFUSIVE_CFL で指定できるようにした．
+#      既定は Inf（公式例と同じく拡散 CFL で制限しない）．Ra = 1e6 では κ が大きく，
+#      max_Δt = 0.1 に達する前に拡散の安定限界（RK3）を超えて NaN になるため，そのケースだけ使う．
 #
 # 使い方（リポジトリのルートで）：
 #   julia --project=. scripts/run_horizontal_convection.jl
@@ -25,6 +28,7 @@ Nz = envnum(Int, "HC_NZ", 64)
 stop_time = envnum(Float64, "HC_STOP_TIME", 40.0)
 Ra = envnum(Float64, "HC_RA", 1e8)
 name = get(ENV, "HC_NAME", "horizontal_convection")
+diffusive_cfl = envnum(Float64, "HC_DIFFUSIVE_CFL", Inf)
 outdir = get(ENV, "HC_OUTPUT", "output")
 mkpath(outdir)
 
@@ -66,7 +70,7 @@ model = NonhydrostaticModel(grid;
 
 simulation = Simulation(model, Δt=1e-2, stop_time=stop_time)
 
-conjure_time_step_wizard!(simulation, IterationInterval(50), cfl=0.7, max_Δt=1e-1)
+conjure_time_step_wizard!(simulation, IterationInterval(50), cfl=0.7, max_Δt=1e-1, diffusive_cfl=diffusive_cfl)
 
 progress(sim) = @printf("Iter: % 6d, sim time: % 1.3f, wall time: % 10s, Δt: % 1.4f, advective CFL: %.2e, diffusive CFL: %.2e\n",
                         iteration(sim), time(sim), prettytime(sim.run_wall_time),
@@ -106,6 +110,7 @@ open(joinpath(outdir, name * "_run.toml"), "w") do io
     println(io, "Ra = ", Ra)
     println(io, "Pr = ", Pr)
     println(io, "stop_time = ", stop_time)
+    println(io, "diffusive_cfl = ", isinf(diffusive_cfl) ? "\"Inf\"" : diffusive_cfl, "  # 時間刻みの拡散 CFL 上限（公式例は Inf）")
     println(io, "iterations = ", iteration(simulation))
     println(io, "wall_time_seconds = ", wall, "  # run! 全体（初回はコンパイル時間を含む）")
     println(io, "output = \"", saved_output_filename, "\"")

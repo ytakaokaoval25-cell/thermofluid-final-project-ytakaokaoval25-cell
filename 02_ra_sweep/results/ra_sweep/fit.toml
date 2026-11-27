@@ -1,0 +1,7 @@
+# 両対数の最小二乗の傾き（128×64，Ra = 1e6〜1e9 の 4 点，窓 [50.0, 100.0]）
+slope_Nu = 0.1781
+slope_Nu_check = 0.2138
+slope_Psi = -0.0066
+slope_delta_chi = -0.0997
+slope_Nu_Ra_ge_1e7 = 0.1868  # 参考：Ra = 1e7〜1e9 の 3 点
+reference_slope = 0.2  # Rossby (1965) Nu ∝ Ra^(1/5)

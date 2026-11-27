@@ -3,6 +3,11 @@
 # 使い方（run_horizontal_convection.jl の後に）：
 #   julia --project=. scripts/check_horizontal_convection.jl            # output/horizontal_convection.jld2
 #   HC_NAME=smoke julia --project=. scripts/check_horizontal_convection.jl
+#   HC_NAME=ra1e6 HC_RA=1e6 HC_T0=50 HC_T1=100 julia --project=. scripts/check_horizontal_convection.jl
+#
+# 平均窓は HC_T0〜HC_T1（既定 20〜40）．前半・後半は窓を 2 等分したもの．
+# ここの Nu（面ベースの 2 次差分，分母は解析値）は照合用．報告に使う Nu は
+# plot_horizontal_convection.jl の公式例と同じ演算子による値（issue #5）．
 #
 # 微分は Oceananigans の演算子を使わず，スタッガード格子上の 2 次差分を
 # 配列から独立に計算する（公式例の Nu 計算との照合にもなる）．
@@ -11,6 +16,7 @@
 #
 # 変更履歴：平均窓 [20, 40] に保存時刻が 2 点未満のとき（smoke 計算など）は
 #           収支 [budget] と時間平均 [means] を省略するようにした（以前は BoundsError で停止）．
+#           （issue #5）平均窓を環境変数 HC_T0, HC_T1 で指定できるようにした．
 
 using Oceananigans
 using Printf
@@ -19,6 +25,10 @@ name = get(ENV, "HC_NAME", "horizontal_convection")
 outdir = get(ENV, "HC_OUTPUT", "output")
 path = joinpath(outdir, name * ".jld2")
 Ra = parse(Float64, get(ENV, "HC_RA", "1e8"))
+T0 = parse(Float64, get(ENV, "HC_T0", "20"))
+T1 = parse(Float64, get(ENV, "HC_T1", "40"))
+T0 < T1 || error("HC_T0 < HC_T1 である必要があります（HC_T0 = $T0, HC_T1 = $T1）")
+Tm = (T0 + T1) / 2
 
 H, Lx, b★, Pr = 1.0, 2.0, 1.0, 1.0
 ν = sqrt(Pr * b★ * Lx^3 / Ra)
@@ -158,15 +168,15 @@ diffusive_table = [(n, n ÷ 2, nu_of_diffusive_solution(n, n ÷ 2)) for n in (32
 
 window(t0, t1) = findall(τ -> t0 <= τ <= t1, t)
 mean_over(x, idx) = sum(x[idx]) / length(idx)
-w_all, w_a, w_b = window(20, 40), window(20, 30), window(30, 40)
+w_all, w_a, w_b = window(T0, T1), window(T0, Tm), window(Tm, T1)
 
-# 窓 [20, 40] に保存時刻が 2 点未満（smoke など短い計算）のときは収支・平均を省略する
+# 窓に保存時刻が 2 点未満（smoke など短い計算）のときは収支・平均を省略する
 has_window = length(w_all) >= 2
 if has_window
     n0, n1 = first(w_all), last(w_all)
     R, Rrel = budget_residual(n0, n1)
 else
-    @warn "平均窓 [20, 40] に十分なデータがないため，収支と時間平均を省略します" final_time = t[end]
+    @warn "平均窓 [$T0, $T1] に十分なデータがないため，収支と時間平均を省略します" final_time = t[end]
 end
 
 open(joinpath(outdir, name * "_checks.toml"), "w") do io
@@ -184,14 +194,16 @@ open(joinpath(outdir, name * "_checks.toml"), "w") do io
         println(io, "residual = ", R)
         println(io, "residual_relative_to_integral_D = ", Rrel)
     else
-        println(io, "\n# [budget] と [means] は省略：平均窓 [20, 40] にデータがない（final_time < 20）")
+        println(io, "\n# [budget] と [means] は省略：平均窓 [", T0, ", ", T1, "] に十分なデータがない")
     end
     println(io, "\n[diffusive_solution]  # 解析解を同じ離散勾配で評価した Nu（1 に近づくべき）")
     for (a, c, v) in diffusive_table
         @printf(io, "Nu_%dx%d = %.6f\n", a, c, v)
     end
     if has_window
-        println(io, "\n[means]  # 窓 [20, 40], 前半 [20, 30], 後半 [30, 40]")
+        println(io, "\n[window]")
+        println(io, "t0 = ", T0, "\nt1 = ", T1, "\ntmid = ", Tm)
+        println(io, "\n[means]  # 窓 [t0, t1], 前半 [t0, tmid], 後半 [tmid, t1]")
         for (lab, x) in (("Nu", Nu), ("K", K), ("Psi", Ψ), ("delta_chi", δ))
             @printf(io, "%s = [%.5g, %.5g, %.5g]\n", lab, mean_over(x, w_all), mean_over(x, w_a), mean_over(x, w_b))
         end

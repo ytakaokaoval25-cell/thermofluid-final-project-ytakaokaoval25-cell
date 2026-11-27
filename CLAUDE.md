@@ -18,14 +18,20 @@
 ## 記録
 
 - 決めたこと・進み具合・計算結果は，チャットではなくリポジトリに残す（README.md の該当節，または `docs/progress.md`）．
-- 計算を実行したら，格子，Ra，終了時刻，スレッド数，実行時間（初回コンパイルと 2 回目を分ける），Julia と Oceananigans の版を記録する．`scripts/run_horizontal_convection.jl` は `output/<名前>_run.toml` に自動で書き出す．
+- 計算を実行したら，格子，Ra，終了時刻，スレッド数，実行時間（初回コンパイルと 2 回目を分ける），Julia と Oceananigans の版を記録する．`scripts/run_horizontal_convection.jl` は `output/<名前>_run.toml` に自動で書き出す．`scripts/run_reproduce.sh`，`scripts/run_ra_sweep.sh` は実行時間を各手順の `results/` に追記する．
 - 公式コードを流用したら，出典（URL・タグ・commit）とライセンス，変更点をファイル冒頭とPRに書く．無改変のコピーは `upstream/` に置く．
 
 ## 環境
 
 - Julia と Oceananigans の版は `Project.toml` / `Manifest.toml` で固定する（Oceananigans v0.110.15，Julia は 1.10 系）．勝手に `Pkg.update` しない．
 - 計算は MacBook Air（Apple Silicon）の CPU で行う．GPU は使わない．
-- 大きな出力（`*.jld2`，`*.mp4`，`output/`）は commit しない．図（png）と小さな結果ファイル（toml，csv）は `results/` に置いて commit する．
+- 大きな出力（`*.jld2`，`*.mp4`，`output/`）は commit しない．図（png）と小さな結果ファイル（toml，csv）は各手順フォルダの `results/` に置いて commit する．
+
+## フォルダ構成
+
+- 手順ごとに `00_reproduce/`，`01_validation/`，`02_ra_sweep/`，`03_ridge/`，`04_extensions/` に分ける．各フォルダに README.md（条件・実行方法・結果）と `results/` を置く．
+- スクリプトは全手順共通で `scripts/` に置く（場所を変えない）．環境変数 `HC_NX, HC_NZ, HC_STOP_TIME, HC_RA, HC_NAME, HC_OUTPUT, HC_FIGURES` の意味は変えない．
+- 発表用の図は `slides/README.md` に一覧を書き，図そのものは各手順の `results/` から使う．
 
 ## 文体
 
