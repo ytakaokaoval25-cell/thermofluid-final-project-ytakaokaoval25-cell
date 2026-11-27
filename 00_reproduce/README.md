@@ -43,3 +43,24 @@ sh scripts/run_reproduce.sh   # 2 回目（コンパイル済みでの時間を�
 - 窓 [20, 40] の平均 Nu ≈ 9.2（面ベースの照合用定義．公式例の定義と K の規格化は手順2で確定：[../02_ra_sweep/](../02_ra_sweep/)）
 - 実行時間：[`results/timing.txt`](results/timing.txt)．本計算 run は実時間 1 分 51 秒（run! 74.6 秒，そのうち約 45 秒がコンパイル），
   初回の `Pkg` 準備に約 16 分．2 回目（コンパイル済み）の時間は `run_reproduce.sh` で追記する．
+
+## 流れ関数の図（スライド用，issue #11）
+
+`scripts/plot_streamfunction.jl`（自作．公式例にはない図）で，循環が目で分かる流れ関数 ψ の図を作る．
+
+```sh
+julia +1.10 --project=. scripts/plot_streamfunction.jl     # 本計算（output/horizontal_convection.jld2）の後に実行
+```
+
+出力：`results/horizontal_convection_streamfunction.png`（左：t = 20〜40 の時間平均 ψ，右：t = 40 の浮力と流線），
+`results/horizontal_convection_streamfunction.toml`（ψ の最大・最小）．
+
+作り方：
+1. 公式例と同じ計算で保存した水平速度 u（0.5 ごとの JLD2）を読む．
+2. 定義 u = ∂ψ/∂z，w = −∂ψ/∂x のうち 1 つ目を使い，底 z = −H で ψ = 0（不透過）として各列で u Δz を下から足し上げる．
+   ψ は格子の角に乗る．離散発散が 0（ここでは 5e-6）なら，−∂ψ/∂x は w と自動的に一致し，上面でも ψ ≈ 0 になる（toml に上面の残差を書く）．
+3. 規格化は ψ/(Lx U★)，U★ = √(Lx b★)（check スクリプトの Psi と同じ）．
+4. 時間平均は平均窓 [20, 40] の保存時刻の単純平均．等値線（流線）は ±max|ψ| を 16 等分した値で引く．
+
+読み方：等値線が流線で，間隔が狭いほど速い．x = 0 で冷やして沈むので，左半分は時計回り（ψ < 0），右半分は反時計回り（ψ > 0）．
+（この計算方法は，既知の ψ から作った非発散の速度場で，丸め誤差の範囲で ψ が戻ることを確認した．）
