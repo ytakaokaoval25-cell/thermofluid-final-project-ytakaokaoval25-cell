@@ -2,7 +2,18 @@
 
 熱流体力学演習 2026 最終プロジェクト（Oceananigans.jl による水平対流）
 
-> 状態：計画段階（2026-11-13 テーマ登録）。11/27 の計画フィードバックまでに詳細を確定する。
+> 状態（2026-11-27）：手順1（再現）と手順2（Ra スイープ）が完了．手順3（海嶺）は作業中．
+
+## 進捗
+
+| 段階 | 状態 | 場所 |
+|---|---|---|
+| 再現（Ra = 10^8） | 済（2026-11-13，Mac CPU で run 1 分 51 秒） | [`00_reproduce/`](00_reproduce/)，issue #3 |
+| 検証 1〜4 | 1・3・4 の一部は済（発散 5e-6，収支残差 2%，純拡散で Nu → 1，Ra = 1e9 の格子依存性）．CFL を半分にした感度と Rocha et al. との比較は未 | [`01_validation/`](01_validation/) |
+| Ra スイープ | 済：Nu = 3.42, 5.08, 7.09, 12.0（Ra = 1e6〜1e9），傾き 0.178（理論 0.2） | [`02_ra_sweep/`](02_ra_sweep/)，issue #5 |
+| 海嶺 | 作業中 | [`03_ridge/`](03_ridge/)，issue #6 |
+| 発展 A・B | 未着手 | [`04_extensions/`](04_extensions/) |
+| スライド | 未着手 | [`slides/`](slides/) |
 
 ## 問い
 
@@ -116,3 +127,19 @@ Ra = b⋆ Lx³ / (νκ)，Pr = ν/κ．Ra を変えるときは Pr を固定し�
 ## ライセンス
 
 コードは MIT License（Oceananigans.jl も MIT）．
+
+## フォルダ構成（issue #8）
+
+手順（課題）ごとにフォルダを分ける．各フォルダの README.md に条件・実行方法・結果を書き，図と小さな結果ファイルはその下の `results/` に置く．
+
+| フォルダ | 内容 |
+|---|---|
+| [`00_reproduce/`](00_reproduce/) | 手順1：公式例（Ra = 1e8，128×64，t = 40）の再現 |
+| [`01_validation/`](01_validation/) | 検証：離散発散，収支，純拡散で Nu = 1，格子依存性 |
+| [`02_ra_sweep/`](02_ra_sweep/) | 手順2：Ra スイープ（Nu ∝ Ra^(1/5)） |
+| [`03_ridge/`](03_ridge/) | 手順3：海嶺の高さと深層循環 |
+| [`04_extensions/`](04_extensions/) | 発展：加熱分布，回転 |
+| [`slides/`](slides/) | 発表に使う図の一覧 |
+| `scripts/` | 全手順で共通のスクリプト（run / check / plot など） |
+| `upstream/` | Oceananigans 公式コードの無改変コピー |
+| `output/` | 大きな計算出力（JLD2，mp4，ログ）．commit しない |
