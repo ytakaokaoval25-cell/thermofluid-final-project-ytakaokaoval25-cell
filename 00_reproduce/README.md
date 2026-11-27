@@ -13,13 +13,20 @@ Mac の CPU でそのまま再現する．
 
 ## 実行方法（リポジトリのルートで）
 
+再現には Oceananigans.jl の公式例そのもの（`upstream/horizontal_convection.jl`）を使う．
+(B) の `scripts/run_horizontal_convection.jl` は公式例と物理・数値設定が同じで，変更点はファイル冒頭に列挙している（自作の書き直しではない）．
+
 ```sh
 julia +1.10 --project=. -e 'using Pkg; Pkg.instantiate()'   # 初回のみ
 
 # 小さな格子での動作確認（64×32, t = 2，1〜2 分）
 HC_NX=64 HC_NZ=32 HC_STOP_TIME=2 HC_NAME=smoke julia +1.10 --project=. scripts/run_horizontal_convection.jl
 
-# 本計算：run → check → plot をまとめて実行し，実行時間を results/timing_raw.txt に追記
+# (A) 公式例をそのまま実行（upstream/horizontal_convection.jl は無改変．出力は output/upstream/）
+sh scripts/run_upstream_example.sh
+sh scripts/run_upstream_example.sh   # 2 回目（コンパイル済みでの時間）
+
+# (B) 検証用：公式例に最小限の変更（出力先・計時・u, w の保存）を加えた版で run → check → plot をまとめて実行し，実行時間を results/timing_raw.txt に追記
 sh scripts/run_reproduce.sh
 sh scripts/run_reproduce.sh   # 2 回目（コンパイル済みでの時間を測る）
 ```
