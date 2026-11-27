@@ -9,7 +9,7 @@
 #   （issue #5）運動エネルギーを軸ラベルどおり K/(Lx b★) で出す（公式例のコードは Lx·H でしか割っていない）．
 #
 # 使い方：julia --project=. scripts/plot_horizontal_convection.jl
-#   HC_NAME=ra1e6 HC_RA=1e6 HC_FIGURES=results/ra1e6 julia --project=. scripts/plot_horizontal_convection.jl
+#   HC_NAME=ra1e6 HC_RA=1e6 HC_FIGURES=02_ra_sweep/results/ra1e6 julia --project=. scripts/plot_horizontal_convection.jl
 
 using CairoMakie
 using Oceananigans
@@ -20,7 +20,7 @@ include(joinpath(@__DIR__, "nusselt_reference.jl"))
 
 name = get(ENV, "HC_NAME", "horizontal_convection")
 outdir = get(ENV, "HC_OUTPUT", "output")
-figdir = get(ENV, "HC_FIGURES", "results")
+figdir = get(ENV, "HC_FIGURES", joinpath("00_reproduce", "results"))
 mkpath(figdir)
 Ra = parse(Float64, get(ENV, "HC_RA", "1e8"))
 

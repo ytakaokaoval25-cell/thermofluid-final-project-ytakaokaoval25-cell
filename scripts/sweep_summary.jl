@@ -1,8 +1,8 @@
 # 手順2（issue #5）：Ra スイープのまとめ
 #
-# 入力：results/<ケース名>/<ケース名>_checks.toml（check スクリプト），
-#       results/<ケース名>/<ケース名>_official_Nu.csv（plot スクリプト：公式例と同じ演算子・数値の χ_diff）
-# 出力：results/ra_sweep/summary.csv，results/ra_sweep/Nu_Ra.png，results/ra_sweep/fit.toml
+# 入力：02_ra_sweep/results/<ケース名>/<ケース名>_checks.toml（check スクリプト），
+#       02_ra_sweep/results/<ケース名>/<ケース名>_official_Nu.csv（plot スクリプト：公式例と同じ演算子・数値の χ_diff）
+# 出力：02_ra_sweep/results/ra_sweep/summary.csv，Nu_Ra.png，fit.toml
 #
 # 使い方：julia --project=. scripts/sweep_summary.jl
 #   平均窓は HC_T0, HC_T1（既定 50, 100．check と同じ窓にすること）
@@ -14,7 +14,7 @@ using TOML
 T0 = parse(Float64, get(ENV, "HC_T0", "50"))
 T1 = parse(Float64, get(ENV, "HC_T1", "100"))
 Tm = (T0 + T1) / 2
-resdir = get(ENV, "HC_RESULTS", "results")
+resdir = get(ENV, "HC_RESULTS", joinpath("02_ra_sweep", "results"))
 outdir = joinpath(resdir, "ra_sweep")
 mkpath(outdir)
 
