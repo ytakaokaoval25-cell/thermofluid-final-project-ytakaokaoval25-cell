@@ -1,0 +1,35 @@
+# 手順1の検証結果（scripts/check_horizontal_convection.jl が生成）
+file = "output/ra1e7.jld2"
+Nx = 128
+Nz = 64
+Ra = 1.0e7
+Pr = 1.0
+final_time = 100.0
+
+[divergence]
+max_abs = 3.814697265625e-6
+max_abs_normalized = 5.394796609394436e-6  # U★/Lx で規格化
+
+[budget]  # 窓 t = 50.0〜100.0
+delta_Eb = 0.07309175018874331
+integral_B_minus_D = 0.07622183867075831
+residual = -0.0031300884820150005
+residual_relative_to_integral_D = -0.004277629953588077
+
+[diffusive_solution]  # 解析解を同じ離散勾配で評価した Nu（1 に近づくべき）
+Nu_32x16 = 0.993747
+Nu_64x32 = 0.998405
+Nu_128x64 = 0.999597
+Nu_256x128 = 0.999899
+Nu_512x256 = 0.999975
+
+[window]
+t0 = 50.0
+t1 = 100.0
+tmid = 75.0
+
+[means]  # 窓 [t0, t1], 前半 [t0, tmid], 後半 [tmid, t1]
+Nu = [5.2253, 5.1693, 5.2903]
+K = [0.0065469, 0.006857, 0.0062714]
+Psi = [0.020973, 0.021369, 0.020658]
+delta_chi = [0.057732, 0.061691, 0.053667]

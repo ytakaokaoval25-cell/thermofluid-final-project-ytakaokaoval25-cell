@@ -1,0 +1,18 @@
+# 手順2（issue #5）の実行時間：2026-11-13，Apple M2 / 8 GB，macOS 15.6.1，JULIA_NUM_THREADS=1
+# Julia 1.10.13，Oceananigans 0.110.15．1 本ずつ順番に実行（並列なし）．
+# 「実時間」は scripts/run_ra_sweep.sh が date で測ったプロセス全体（パッケージ読込・JIT コンパイル込み，秒）．
+# 「run!」は <ケース>_run.toml の wall_time_seconds（run! の中だけ，初回コンパイル込み）．
+
+ケース           格子      ステップ数  run 実時間  run!    check  plot（図＋mp4）
+ra1e6            128×64    5876        266         202.0   35     123   （HC_DIFFUSIVE_CFL=0.2 で再計算）
+ra1e7            128×64    4504        154         108.9   24     136
+ra1e8            128×64    4942        165         110.7   27     108
+ra1e9            128×64    5098        180         127.1   24     143
+ra1e9_256x128    256×128   10749       542         505.5   31     185
+
+ra1e6（既定 HC_DIFFUSIVE_CFL=Inf）    : t ≈ 15.47（900 ステップ）で NaN．約 70 秒で停止（output/ra1e6_run_nan_default.log）
+check_diffusive_limit.jl（128×64，κ=1，t=1.5，61443 ステップ） : 実時間 8 分 33 秒（run! 152.9 秒）
+sweep_summary.jl                                               : 実時間 28 秒
+
+注：ra1e7_run.toml には diffusive_cfl の行がない（HC_DIFFUSIVE_CFL を足す前の run スクリプトで実行したため）．
+    設定は既定（Inf，公式例と同じ）．
