@@ -7,8 +7,8 @@
 # 格子と境界条件は run_horizontal_convection.jl と同じ．
 #
 # 使い方：julia --project=. scripts/check_diffusive_limit.jl
-#   HC_NX, HC_NZ（既定 128, 64），HC_DIFF_STOP_TIME（既定 1.5），HC_OUTPUT（既定 output）
-# 出力：<HC_OUTPUT>/diffusive_limit_<Nx>x<Nz>.toml
+#   HC_NX, HC_NZ（既定 128, 64），HC_DIFF_STOP_TIME（既定 1.5），HC_RESULTS（既定 01_validation/results）
+# 出力：<HC_RESULTS>/diffusive_limit_<Nx>x<Nz>.toml
 
 using Oceananigans
 using Printf
@@ -19,7 +19,7 @@ envnum(T, key, default) = parse(T, get(ENV, key, string(default)))
 Nx = envnum(Int, "HC_NX", 128)
 Nz = envnum(Int, "HC_NZ", 64)
 stop_time = envnum(Float64, "HC_DIFF_STOP_TIME", 1.5)
-outdir = get(ENV, "HC_OUTPUT", "output")
+outdir = get(ENV, "HC_RESULTS", joinpath("01_validation", "results"))  # 小さな toml なので直接 results に書く
 mkpath(outdir)
 
 H, Lx, b★ = 1.0, 2.0, 1.0
